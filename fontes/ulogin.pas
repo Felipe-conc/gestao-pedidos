@@ -169,11 +169,8 @@ begin
 //  httpLogin.Request.ContentType  := 'application/json';
 //  httpLogin.Request.ContentEncoding:= 'utf-8';
 
-//  j:= '{ "email": "' +AEmail+ '",' +
-//      '"senha": "' +ASenha+ '" }';
-
-  j:= '{ "email": "teste@gmail.com",' +
-      '"senha": "123123" }';
+  j:= '{ "email": "' +AEmail+ '",' +
+      '"senha": "' +ASenha+ '" }';
 
   try
     vJsonToSend := TStringStream.Create(j, TEncoding.UTF8);
@@ -181,7 +178,7 @@ begin
       vResponse := httpLogin.Post(gb_base_url + '/login', vJsonToSend);
     except
       on E: Exception do begin
-        ShowMessage('Falha de conexão com o servidor.');
+        ShowMessage('Falha de conexÃ£o com o servidor.');
         Exit;
       end;
     end;
@@ -193,9 +190,9 @@ begin
   vObj := TJSONObject(TJSONObject.ParseJSONValue(vResponse));
   if vObj.TryGetValue<string>('error', vErro) then begin
     if vObj.GetValue('error').Value = 'no_establishments_linked' then
-      ShowMessage('Seu usuário não possui estabelecimentos vinculados. Procure o suporte do sistema!')
+      ShowMessage('Seu usuÃ¡rio nÃ£o possui estabelecimentos vinculados. Procure o suporte do sistema!')
     else
-      ShowMessage('Usuário ou senha inválidos!');
+      ShowMessage('UsuÃ¡rio ou senha invÃ¡lidos!');
 
     Exit;
   end
@@ -246,7 +243,7 @@ begin
     end;
 
     if gb_estabelecimento = -1 then begin
-      ShowMessage('Seu usuário não possui estabelecimentos vinculados! Procure o suporte do sistema.');
+      ShowMessage('Seu usuÃ¡rio nÃ£o possui estabelecimentos vinculados! Procure o suporte do sistema.');
       Application.Terminate;
     end;
     if not paramCriado then
@@ -254,7 +251,7 @@ begin
 
 //    if not paramCriado then begin
 //      if gb_estabelecimento = -1 then begin
-//        ShowMessage('Seu usuário não possui estabelecimentos vinculados! Procure o suporte do sistema.');
+//        ShowMessage('Seu usuÃ¡rio nÃ£o possui estabelecimentos vinculados! Procure o suporte do sistema.');
 //        Application.Terminate;
 //      end;
 //
