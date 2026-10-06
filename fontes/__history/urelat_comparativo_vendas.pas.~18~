@@ -1,0 +1,215 @@
+unit urelat_comparativo_vendas;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, uform_modelo_modal,
+  Vcl.Imaging.pngimage, Vcl.ExtCtrls, Vcl.StdCtrls, Vcl.Mask,
+  RxToolEdit, udm, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.Client, Data.DB,
+  FireDAC.Comp.DataSet, System.JSON, frxClass, frxDBSet,
+  System.DateUtils;
+
+type
+  TfRelat_comparativo_vendas = class(Tfform_modelo_modal)
+    Label1: TLabel;
+    Label2: TLabel;
+    eDataDe: TRxDateEdit;
+    eDataAte: TRxDateEdit;
+    Panel3: TPanel;
+    Bevel1: TBevel;
+    bSair: TButton;
+    bOk: TButton;
+    dsPedido: TDataSource;
+    qRelat: TFDQuery;
+    dsRelat: TDataSource;
+    cbStatus: TComboBox;
+    Label3: TLabel;
+    memPedido: TFDMemTable;
+    memPedidoId: TIntegerField;
+    memPedidoDescricao: TStringField;
+    memPedidoPreco_total: TFloatField;
+    memPedidoStatus: TStringField;
+    memPedidoIdx_status: TIntegerField;
+    frqPedidos: TfrxDBDataset;
+    frRelatorio: TfrxReport;
+    qVendaE: TFDQuery;
+    dsVendaE: TDataSource;
+    frqVendasE: TfrxDBDataset;
+    procedure bOkClick(Sender: TObject);
+  private
+    { Private declarations }
+    procedure carregaMemTable(AObj : TJSONObject; AId, AStatus : integer; ADescricao : string);
+    procedure limparCampos;
+    procedure carregaVendaExterna;
+  public
+    { Public declarations }
+  end;
+
+var
+  fRelat_comparativo_vendas: TfRelat_comparativo_vendas;
+
+implementation
+
+{$R *.dfm}
+
+uses uglobal_vars, ulib_fortesreport, udm_fastreport;
+
+procedure TfRelat_comparativo_vendas.bOkClick(Sender: TObject);
+var
+  vObj : TJSONObject;
+  vId, TotalPedidos : integer;
+  ValorTotal : Double;
+  vFiltro : string;
+begin
+  inherited;
+  memPedido.EmptyDataSet;
+
+  with qRelat do begin
+    Close;
+    SQL.Clear;
+    SQL.Add('select id, json, status, data, codigo_descricao,');
+    SQL.Add('      (select count(*) from pedidos) as total ');
+    SQL.Add('from pedidos');
+    SQL.Add('where 1 = 1');
+
+    if eDataDe.Date > 0 then begin
+      SQL.Add('and data >= :datade');
+      ParamByName('datade').AsDateTime := eDataDe.Date;
+    end;
+
+    if eDataAte.Date > 0 then begin
+      SQL.Add('and data < :dataate');
+      ParamByName('dataate').AsDateTime := IncDay(eDataAte.Date, 1);
+    end;
+
+    if cbStatus.ItemIndex <> 0 then begin
+      SQL.Add('and status = :status');
+      ParamByName('status').AsInteger := cbStatus.ItemIndex - 1;
+    end;
+
+    Open;
+  end;
+
+  if qRelat.IsEmpty then begin
+    ShowMessage('Nenhum registro foi encontrado!');
+    Exit;
+  end;
+
+  while not qRelat.Eof do begin
+    vObj := TJSONObject(TJSONObject.ParseJSONValue(qRelat.FieldByName('json').AsString));
+    vId  := StrToInt(vObj.GetValue('id').Value);
+
+    if memPedido.Locate('Id', vId, []) then begin
+      qRelat.Next;
+      Continue;
+    end;
+
+    carregaMemTable(vObj, vId, qRelat.FieldByName('status').AsInteger,
+                    IntToStr(qRelat.FieldByName('codigo_descricao').AsInteger));
+    qRelat.Next;
+  end;
+
+  carregaVendaExterna;
+
+  TotalPedidos := 0;
+  ValorTotal   := 0.0;
+  memPedido.First;
+  while not memPedido.EOF do begin
+    Inc(TotalPedidos);
+    ValorTotal := ValorTotal + memPedidoPreco_total.AsFloat;
+    memPedido.Next;
+  end;
+
+  vFiltro := '';
+  if (eDataDe.Date = eDataAte.Date) then begin
+    vFiltro := 'Período do dia : ' + eDataDe.Text;
+  end
+  else begin
+      if eDataDe.Date > 0 then begin
+      vFiltro := 'Período de : ' + eDataDe.Text;
+    end;
+
+    if eDataAte.Date > 0 then begin
+      if eDataDe.Date <= 0 then
+        vFiltro := vFiltro + 'Período';
+      vFiltro := vFiltro + ' até : ' + eDataAte.Text;
+    end;
+  end;
+
+  frRelatorio.Variables['total_pedidos'] := TotalPedidos;
+  frRelatorio.Variables['valor_total']   := ValorTotal;
+  frRelatorio.Variables['filtro']        := QuotedStr(vFiltro);
+  frRelatorio.ShowReport;
+end;
+
+procedure TfRelat_comparativo_vendas.carregaMemTable(AObj: TJSONObject; AId,
+  AStatus: integer; ADescricao: string);
+var
+  vCupom : TJSONObject;
+begin
+  vCupom := TJSONObject(TJSONObject.ParseJSONValue(AObj.GetValue('cupom').Value));
+
+  memPedido.Append;
+  memPedidoId.AsInteger         := AId;
+  memPedidoDescricao.AsString   := 'Pedido #' + ADescricao;
+  memPedidoPreco_total.AsString := vCupom.GetValue('preco_total').Value;
+  memPedidoIdx_status.AsInteger := AStatus;
+
+  case AStatus of
+    0: memPedidoStatus.AsString := 'Confirmado';
+    1: memPedidoStatus.AsString := 'Em preparo';
+    2: memPedidoStatus.AsString := 'Pronto';
+    3: memPedidoStatus.AsString := 'Saiu para Entrega';
+    4: memPedidoStatus.AsString := 'Entregue';
+    5: memPedidoStatus.AsString := 'Cancelado';
+  end;
+
+  memPedido.Post;
+end;
+
+procedure TfRelat_comparativo_vendas.carregaVendaExterna;
+begin
+  with qVendaE do begin
+    Close;
+    SQL.Clear;
+    SQL.Add('select');
+    SQL.Add('  substr(cv.descricao, 1, 100) AS descricao,');
+    SQL.Add('  sum(v.valor_bruto) as total_bruto,');
+    SQL.Add('  (sum(v.taxa_servico) + sum(v.taxa_adicional)) as total_taxa,');
+    SQL.Add('  (sum(v.valor_bruto) - (sum(v.taxa_servico) + sum(v.taxa_adicional))) as total_liquido,');
+    SQL.Add('  sum(numero_pedidos) as numero_pedidos');
+    SQL.Add('from venda_externa v');
+    SQL.Add('inner join canal_venda cv on cv.id = v.id_canal_venda');
+    SQL.Add('where 1 = 1');
+
+    if eDataDe.Date > 0 then begin
+      SQL.Add('and data_venda >= :datade');
+      ParamByName('datade').AsDateTime := eDataDe.Date;
+    end;
+
+    if eDataAte.Date > 0 then begin
+      SQL.Add('and data_venda < :dataate');
+      ParamByName('dataate').AsDateTime := IncDay(eDataAte.Date, 1);
+    end;
+
+    SQL.Add('group by v.id_canal_venda');
+
+    Open;
+  end;
+
+  if qRelat.IsEmpty then begin
+    ShowMessage('Nenhuma venda externa foi encontrada!');
+    Exit;
+  end;
+end;
+
+procedure TfRelat_comparativo_vendas.limparCampos;
+begin
+  eDataDe.Date  := Date;
+  eDataAte.Date := Date;
+end;
+
+end.

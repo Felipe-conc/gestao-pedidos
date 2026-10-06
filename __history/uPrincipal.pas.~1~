@@ -1,0 +1,57 @@
+unit uPrincipal;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, RALRequest, RALResponse, RALTypes,
+  RALCustomObjects, RALServer, RALIndyServer, Vcl.ExtCtrls, FireDAC.Stan.Intf,
+  FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS,
+  FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt,
+  IdCustomTCPServer, IdCustomHTTPServer, IdHTTPServer, IdBaseComponent,
+  IdComponent, IdTCPConnection, IdTCPClient, IdHTTP, Data.DB,
+  FireDAC.Comp.DataSet, FireDAC.Comp.Client, System.JSON;
+
+type
+  TfPrincipal = class(TForm)
+    Panel1: TPanel;
+    dsPedido: TDataSource;
+    httpPedidos: TIdHTTP;
+    IdHTTPServer1: TIdHTTPServer;
+    memPedido: TFDMemTable;
+    procedure RALIndyServer1Request(ARequest: TRALRequest;
+      AResponse: TRALResponse);
+    procedure RALIndyServer1Response(ARequest: TRALRequest;
+      AResponse: TRALResponse);
+  private
+    { Private declarations }
+    procedure carregaPedidos;
+  public
+    { Public declarations }
+  end;
+
+var
+  fPrincipal: TfPrincipal;
+
+implementation
+
+{$R *.dfm}
+
+
+
+{ TfPrincipal }
+
+procedure TfPrincipal.carregaPedidos;
+var
+  vResponse : string;
+  vJSONArray : TJSONArray;
+begin
+  vResponse := httpPedidos.Get('get/pedidos');
+
+  vJSONArray := TJSONObject.ParseJSONValue(vResponse) as  ;
+
+
+end;
+
+
+end.

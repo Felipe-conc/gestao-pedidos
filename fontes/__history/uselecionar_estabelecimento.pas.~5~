@@ -1,0 +1,32 @@
+unit uselecionar_estabelecimento;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, uform_modelo_modal, Vcl.StdCtrls,
+  Vcl.Imaging.pngimage, Vcl.ExtCtrls, Vcl.DBCtrls;
+
+type
+  TfSelecionar_Estabelecimento = class(Tfform_modelo_modal)
+    Panel3: TPanel;
+    Panel4: TPanel;
+    nCancelar: TButton;
+    bOk: TButton;
+    Label1: TLabel;
+    cbEstabelecimento: TDBLookupComboBox;
+    Label2: TLabel;
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  fSelecionar_Estabelecimento: TfSelecionar_Estabelecimento;
+
+implementation
+
+{$R *.dfm}
+
+end.

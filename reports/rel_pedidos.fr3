@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<TfrxReport Version="2022.1.3" DotMatrixReport="False" IniFile="\Software\Fast Reports" PreviewOptions.Buttons="167935" PreviewOptions.Zoom="1" PrintOptions.Printer="Default" PrintOptions.PrintOnSheet="0" ReportOptions.CreateDate="46141,386154294" ReportOptions.Description.Text="" ReportOptions.LastChange="46169,4696551042" ScriptLanguage="PascalScript" ScriptText.Text="begin&#13;&#10;&#13;&#10;end.">
+  <Datasets>
+    <item DataSet="frqPedidos" DataSetName="frqPedidos"/>
+    <item DataSet="frqItens" DataSetName="frqItens"/>
+  </Datasets>
+  <Variables>
+    <item Name=" My Category"/>
+    <item Name="total_pedidos"/>
+    <item Name="valor_total"/>
+    <item Name="filtro"/>
+  </Variables>
+  <TfrxDataPage Name="Data" HGuides.Text="" VGuides.Text="" Height="1000" Left="0" Top="0" Width="1000"/>
+  <TfrxReportPage Name="Page1" HGuides.Text="" VGuides.Text="" PaperWidth="210" PaperHeight="297" PaperSize="256" LeftMargin="10" RightMargin="10" TopMargin="10" BottomMargin="10" ColumnWidth="0" ColumnPositions.Text="" Frame.Typ="0" MirrorMode="0">
+    <TfrxReportSummary Name="ReportSummary1" FillType="ftBrush" FillGap.Top="0" FillGap.Left="0" FillGap.Bottom="0" FillGap.Right="0" Frame.Typ="0" Height="105,82684" Left="0" Top="472,44125" Width="718,1107">
+      <TfrxMemoView Name="Memo8" AllowVectorExport="True" Left="382,17347" Top="66,91342" Width="143,62214" Height="22,67718" Font.Charset="1" Font.Color="0" Font.Height="-15" Font.Name="Arial" Font.Style="0" Frame.Typ="0" HAlign="haCenter" ParentFont="False" Text="[total_pedidos]"/>
+      <TfrxMemoView Name="Memo7" AllowVectorExport="True" Left="533,1342" Top="66,91342" Width="173,85838" Height="22,67718" Font.Charset="1" Font.Color="0" Font.Height="-15" Font.Name="Arial" Font.Style="0" Frame.Typ="0" HAlign="haCenter" ParentFont="False" Text="R$ [valor_total]"/>
+      <TfrxMemoView Name="Memo3" AllowVectorExport="True" Left="380,953" Top="40,45671" Width="143,62214" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-15" Font.Name="Arial" Font.Style="1" Frame.Typ="0" HAlign="haCenter" ParentFont="False" VAlign="vaCenter" Text="Total de Pedidos"/>
+      <TfrxMemoView Name="Memo4" AllowVectorExport="True" Left="533,1342" Top="40,45671" Width="173,85838" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-15" Font.Name="Arial" Font.Style="1" Frame.Typ="0" HAlign="haCenter" ParentFont="False" VAlign="vaCenter" Text="Valor total"/>
+    </TfrxReportSummary>
+    <TfrxGroupHeader Name="GroupHeader1" FillType="ftBrush" FillGap.Top="0" FillGap.Left="0" FillGap.Bottom="0" FillGap.Right="0" Frame.Typ="0" Height="83,14966" Left="0" Top="173,85838" Width="718,1107" Condition="frqPedidos.&#34;Id&#34;">
+      <TfrxMemoView Name="Memo5" AllowVectorExport="True" Left="7,55906" Top="15,11812" Width="207,87415" Height="22,67718" Font.Charset="1" Font.Color="0" Font.Height="-16" Font.Name="Arial" Font.Style="1" Frame.Typ="0" ParentFont="False" Text="[frqPedidos.&#34;Descricao&#34;]">
+        <Formats>
+          <item/>
+          <item/>
+        </Formats>
+      </TfrxMemoView>
+      <TfrxMemoView Name="Memo11" AllowVectorExport="True" Left="289,81911" Top="15,11812" Width="185,19697" Height="22,67718" Font.Charset="1" Font.Color="0" Font.Height="-16" Font.Name="Arial" Font.Style="0" Frame.Typ="0" ParentFont="False" Text="[frqPedidos.&#34;Data&#34;]">
+        <Formats>
+          <item/>
+          <item/>
+        </Formats>
+      </TfrxMemoView>
+      <TfrxMemoView Name="Memo12" AllowVectorExport="True" Left="240,68522" Top="15,11812" Width="45,35436" Height="22,67718" Font.Charset="1" Font.Color="0" Font.Height="-16" Font.Name="Arial" Font.Style="1" Frame.Typ="0" ParentFont="False" Text="Data:"/>
+      <TfrxMemoView Name="Memo13" AllowVectorExport="True" Left="555,59091" Top="15,11812" Width="154,96073" Height="22,67718" Font.Charset="1" Font.Color="0" Font.Height="-16" Font.Name="Arial" Font.Style="0" Frame.Typ="0" ParentFont="False" Text="[frqPedidos.&#34;Status&#34;]"/>
+      <TfrxMemoView Name="Memo14" AllowVectorExport="True" Left="491,3389" Top="15,11812" Width="60,47248" Height="22,67718" Font.Charset="1" Font.Color="0" Font.Height="-16" Font.Name="Arial" Font.Style="1" Frame.Typ="0" ParentFont="False" Text="Status:"/>
+      <TfrxMemoView Name="Memo15" AllowVectorExport="True" Left="0" Top="52,91342" Width="718,1107" Height="26,45671" Font.Charset="1" Font.Color="0" Font.Height="-16" Font.Name="Arial" Font.Style="0" Frame.Typ="0" Fill.BackColor="15000804" ParentFont="False" Text=""/>
+      <TfrxMemoView Name="Memo16" AllowVectorExport="True" Left="11,33859" Top="55,13389" Width="37,7953" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-16" Font.Name="Arial" Font.Style="1" Frame.Typ="0" Fill.BackColor="15000804" ParentFont="False" Text="Item"/>
+      <TfrxMemoView Name="Memo17" AllowVectorExport="True" Left="279,68522" Top="55,13389" Width="166,29932" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-16" Font.Name="Arial" Font.Style="1" Frame.Typ="0" Fill.BackColor="15000804" HAlign="haCenter" ParentFont="False" Text="Quantidade"/>
+      <TfrxMemoView Name="Memo18" AllowVectorExport="True" Left="573,14997" Top="55,13389" Width="86,92919" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-16" Font.Name="Arial" Font.Style="1" Frame.Typ="0" Fill.BackColor="15000804" ParentFont="False" Text="Valor Total"/>
+    </TfrxGroupHeader>
+    <TfrxMasterData Name="MasterData1" FillType="ftBrush" FillGap.Top="0" FillGap.Left="0" FillGap.Bottom="0" FillGap.Right="0" Frame.Typ="0" Height="3,77953" Left="0" Top="279,68522" Width="718,1107" OnBeforePrint="MasterData1OnBeforePrint" ColumnWidth="0" ColumnGap="0" DataSet="frqPedidos" DataSetName="frqPedidos" RowCount="0"/>
+    <TfrxDetailData Name="DetailData1" FillType="ftBrush" FillGap.Top="0" FillGap.Left="0" FillGap.Bottom="0" FillGap.Right="0" Frame.Typ="0" Height="26,45671" Left="0" Top="306,14193" Width="718,1107" ColumnWidth="0" ColumnGap="0" DataSet="frqItens" DataSetName="frqItens" RowCount="0">
+      <TfrxMemoView Name="Memo10" AllowVectorExport="True" Left="11,33859" Top="4,55906" Width="253,22851" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-15" Font.Name="Arial" Font.Style="0" Frame.Typ="0" ParentFont="False" Text="[frqItens.&#34;Nome&#34;]">
+        <Formats>
+          <item/>
+          <item/>
+        </Formats>
+      </TfrxMemoView>
+      <TfrxMemoView Name="Memo19" AllowVectorExport="True" Left="279,68522" Top="4,55906" Width="166,29932" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-15" Font.Name="Arial" Font.Style="0" Frame.Typ="0" HAlign="haCenter" ParentFont="False" Text="[frqItens.&#34;Quantidade&#34;]"/>
+      <TfrxMemoView Name="Memo20" AllowVectorExport="True" Left="532,35467" Top="4,55906" Width="173,85838" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-15" Font.Name="Arial" Font.Style="0" Frame.Typ="0" HAlign="haCenter" ParentFont="False" Text="R$ [FormatFloat('0.00',&#60;frqItens.&#34;Preco_total&#34;&#62;)]"/>
+    </TfrxDetailData>
+    <TfrxGroupFooter Name="GroupFooter1" FillType="ftBrush" FillGap.Top="0" FillGap.Left="0" FillGap.Bottom="0" FillGap.Right="0" Frame.Typ="0" Height="56,69295" Left="0" Top="355,27582" Width="718,1107">
+      <TfrxMemoView Name="Memo21" AllowVectorExport="True" Left="381,73253" Top="7,55906" Width="143,62214" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-15" Font.Name="Arial" Font.Style="1" Frame.Typ="0" HAlign="haCenter" ParentFont="False" Text="Total do Pedido:"/>
+      <TfrxMemoView Name="Memo22" AllowVectorExport="True" Left="532,35467" Top="7,55906" Width="173,85838" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-15" Font.Name="Arial" Font.Style="1" Frame.Typ="0" HAlign="haCenter" ParentFont="False" Text="R$ [FormatFloat('0.00',&#60;frqPedidos.&#34;Preco_total&#34;&#62;)]"/>
+      <TfrxShapeView Name="Shape1" AllowVectorExport="True" Left="0" Top="34,01577" Width="718" Height="1" Frame.Typ="0"/>
+    </TfrxGroupFooter>
+    <TfrxReportTitle Name="ReportTitle1" FillType="ftBrush" FillGap.Top="0" FillGap.Left="0" FillGap.Bottom="0" FillGap.Right="0" Frame.Typ="0" Height="94,48825" Left="0" Top="18,89765" Width="718,1107">
+      <TfrxMemoView Name="Memo1" AllowVectorExport="True" Left="578,26809" Top="3,77953" Width="136,06308" Height="18,89765" Font.Charset="1" Font.Color="0" Font.Height="-13" Font.Name="Arial" Font.Style="0" Frame.Typ="0" HAlign="haRight" ParentFont="False" VAlign="vaCenter" Text="[Page] / [TotalPages#]"/>
+      <TfrxMemoView Name="Memo23" AllowVectorExport="True" Left="3,77953" Top="72,25201" Width="710,55164" Height="18,89765" Frame.Typ="0" Text="[filtro]"/>
+    </TfrxReportTitle>
+    <TfrxMemoView Name="Memo2" AllowVectorExport="True" Left="-3,77953" Top="42,35436" Width="718,1107" Height="30,23624" Font.Charset="1" Font.Color="0" Font.Height="-27" Font.Name="Arial" Font.Style="1" Frame.Typ="0" HAlign="haCenter" ParentFont="False" VAlign="vaCenter" Text="Relatório de Pedidos"/>
+  </TfrxReportPage>
+</TfrxReport>

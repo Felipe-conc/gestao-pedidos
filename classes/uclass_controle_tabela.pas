@@ -1,0 +1,34 @@
+unit uclass_controle_tabela;
+
+interface
+
+type
+  TControleTabela = class
+    public
+      Constructor create;
+      procedure gravar; virtual; abstract;
+      procedure alterar; virtual; abstract;
+      procedure excluir; virtual; abstract;
+      procedure inserir; virtual; abstract;
+      procedure direcao(tag : integer); virtual; abstract;
+      procedure limparCampos; virtual; abstract;
+      function  confereCampos : boolean; virtual;
+      function  podeExcluir : boolean; virtual; abstract;
+      function  buscaRegistro(AId : integer) : boolean; virtual; abstract;
+  end;
+
+implementation
+
+{ TControleTabela }
+
+function TControleTabela.confereCampos: boolean;
+begin
+  Result := False;
+end;
+
+constructor TControleTabela.create;
+begin
+  limparCampos;
+end;
+
+end.

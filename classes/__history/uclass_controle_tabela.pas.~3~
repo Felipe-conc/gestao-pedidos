@@ -1,0 +1,13 @@
+unit uclass_controle_tabela;
+
+interface
+
+type
+  TControleTabela = class
+    public
+      procedure gravar;
+  end;
+
+implementation
+
+end.

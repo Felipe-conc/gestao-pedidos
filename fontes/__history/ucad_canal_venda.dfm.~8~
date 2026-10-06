@@ -1,0 +1,114 @@
+inherited fcad_canal_venda: Tfcad_canal_venda
+  Caption = 'Cadastro de Canal de Venda'
+  ClientHeight = 402
+  OnShow = FormShow
+  ExplicitHeight = 441
+  PixelsPerInch = 96
+  TextHeight = 13
+  inherited Panel1: TPanel
+    Height = 402
+    ExplicitHeight = 402
+  end
+  inherited Panel2: TPanel
+    Height = 402
+    ExplicitHeight = 402
+    object Label1: TLabel [0]
+      Left = 163
+      Top = 96
+      Width = 50
+      Height = 13
+      Caption = 'Descri'#231#227'o:'
+    end
+    object Label2: TLabel [1]
+      Left = 163
+      Top = 69
+      Width = 37
+      Height = 13
+      Caption = 'C'#243'digo:'
+    end
+    object Label3: TLabel [2]
+      Left = 163
+      Top = 124
+      Width = 128
+      Height = 13
+      Caption = 'Comiss'#227'o - Taxa Fixa (%):'
+    end
+    inherited Panel3: TPanel
+      Top = 351
+      ExplicitTop = 351
+    end
+    object eDescricao: TEdit
+      Left = 297
+      Top = 93
+      Width = 348
+      Height = 21
+      TabOrder = 1
+    end
+    object eCodigo: TEdit
+      Left = 297
+      Top = 66
+      Width = 63
+      Height = 21
+      Enabled = False
+      TabOrder = 2
+    end
+    object eTaxaFixa: TFnpNumericEdit
+      Left = 297
+      Top = 121
+      Width = 121
+      Height = 21
+      Alignment = taRightJustify
+      TabOrder = 3
+    end
+    object gCanais: TDBGrid
+      Left = 163
+      Top = 158
+      Width = 494
+      Height = 153
+      DataSource = dsCanalV
+      TabOrder = 4
+      TitleFont.Charset = DEFAULT_CHARSET
+      TitleFont.Color = clWindowText
+      TitleFont.Height = -11
+      TitleFont.Name = 'Tahoma'
+      TitleFont.Style = []
+      Columns = <
+        item
+          Expanded = False
+          FieldName = 'id'
+          Title.Caption = 'C'#243'digo'
+          Visible = True
+        end
+        item
+          Expanded = False
+          FieldName = 'descricao_exibir'
+          Title.Caption = 'Descri'#231#227'o'
+          Width = 300
+          Visible = True
+        end
+        item
+          Expanded = False
+          FieldName = 'taxa_fixa'
+          Title.Caption = 'Taxa Fixa (%)'
+          Width = 100
+          Visible = True
+        end>
+    end
+  end
+  object qCanalV: TFDQuery
+    Active = True
+    Connection = dm.conexao
+    SQL.Strings = (
+      'select id,'
+      '       substr(descricao, 1, 100) AS descricao_exibir,'
+      '       taxa_fixa'
+      'from canal_venda')
+    Left = 776
+    Top = 168
+  end
+  object dsCanalV: TDataSource
+    DataSet = qCanalV
+    Left = 776
+    Top = 216
+  end
+end

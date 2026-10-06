@@ -1,0 +1,241 @@
+unit uconfig_impressora;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, ACBrPosPrinter, ACBrBase,
+  ACBrDevice, uform_modelo_modal, Vcl.StdCtrls, Vcl.Samples.Spin, Vcl.Buttons,
+  Vcl.ExtCtrls, typinfo, Printers, FireDAC.Comp.Client;
+
+type
+  Tfconfig_impressora = class(Tfform_modelo_modal)
+    Label1: TLabel;
+    Label4: TLabel;
+    Label2: TLabel;
+    Label3: TLabel;
+    Label5: TLabel;
+    Label7: TLabel;
+    cbxModelo: TComboBox;
+    cbxPorta: TComboBox;
+    seColunas: TSpinEdit;
+    seEspLinhas: TSpinEdit;
+    cbxPagCodigo: TComboBox;
+    seLinhasPular: TSpinEdit;
+    cbCortarPapel: TCheckBox;
+    Panel3: TPanel;
+    Bevel1: TBevel;
+    bSair: TButton;
+    bGravar: TButton;
+    bTestar: TButton;
+    ACBrPosPrinter1: TACBrPosPrinter;
+    procedure FormCreate(Sender: TObject);
+    procedure bTestarClick(Sender: TObject);
+    procedure bGravarClick(Sender: TObject);
+    procedure bSairClick(Sender: TObject);
+  private
+    { Private declarations }
+    function confereCampos : boolean;
+    procedure carregarCampos;
+    procedure limparCampos;
+  public
+    { Public declarations }
+  end;
+
+var
+  fconfig_impressora: Tfconfig_impressora;
+
+implementation
+
+{$R *.dfm}
+
+uses udm;
+
+procedure Tfconfig_impressora.bGravarClick(Sender: TObject);
+var
+  q1 : TFDQuery;
+begin
+  inherited;
+
+  if not confereCampos then
+    Exit;
+
+  q1 := TFDQuery.Create(nil);
+  try
+    q1.Connection := dm.conexao;
+    q1.Close;
+    q1.SQL.Clear;
+    q1.SQL.Add('update param');
+    q1.SQL.Add('set modelo_impressora = :modelo_impressora, ');
+    q1.SQL.Add('    porta_imp = :porta_imp,');
+    q1.SQL.Add('    pagina_codigo_imp = :pagina_codigo_imp,');
+    q1.SQL.Add('    corta_papel_imp = :corta_papel_imp,');
+    q1.SQL.Add('    espaco_entre_linhas_imp = :espaco_entre_linhas_imp,');
+    q1.SQL.Add('    linhas_entre_cupons_imp = :linhas_entre_cupons_imp');
+    q1.SQL.Add('where id = :id');
+
+    q1.ParamByName('modelo_impressora').AsInteger := cbxModelo.ItemIndex;
+    q1.ParamByName('porta_imp').AsString          := cbxPorta.Text;
+    q1.ParamByName('pagina_codigo_imp').AsInteger := cbxPagCodigo.ItemIndex;
+
+    q1.ParamByName('corta_papel_imp').AsString := 'N';
+    if cbCortarPapel.Checked then
+      q1.ParamByName('corta_papel_imp').AsString := 'S';
+
+    q1.ParamByName('espaco_entre_linhas_imp').AsInteger := seEspLinhas.Value;
+    q1.ParamByName('linhas_entre_cupons_imp').AsInteger := seLinhasPular.Value;
+    q1.ParamByName('colunas_imp').AsInteger             := seColunas.Value;
+    q1.ParamByName('id').AsInteger                      := 1;
+
+    q1.ExecSQL;
+    dm.conexao.Commit;
+
+  finally
+    FreeAndNil(q1);
+  end;
+  ShowMessage('Configuração salva com sucesso!');
+end;
+
+procedure Tfconfig_impressora.bSairClick(Sender: TObject);
+begin
+  inherited;
+  Close;
+end;
+
+procedure Tfconfig_impressora.bTestarClick(Sender: TObject);
+var
+  lista : TStringList;
+begin
+  inherited;
+  if not confereCampos then
+    Exit;
+
+  lista := TStringList.Create;
+  lista.Clear;
+
+  lista.Add('</zera>');
+  lista.Add('</ce><n>AcheiVC</n>');
+  lista.Add('</ce><n>TESTE DE IMPRESSÃO</n>');
+  lista.Add('');
+  lista.Add('</ce><n>===================</n>');
+  lista.Add('');
+  lista.Add('</ae>ITENS');
+  lista.Add('</ae> -1x Produto Teste');
+  lista.Add('  SubTotal: R$ 10');
+  lista.Add('');
+  lista.Add('</ce><n>===================</n>');
+  lista.Add('');
+  lista.Add('</corte_total>');
+
+  ACBrPosPrinter1.Modelo             := TACBrPosPrinterModelo(cbxModelo.ItemIndex);
+  ACBrPosPrinter1.Porta              := cbxPorta.Text;
+  ACBrPosPrinter1.PaginaDeCodigo     := TACBrPosPaginaCodigo(cbxPagCodigo.ItemIndex);
+  ACBrPosPrinter1.CortaPapel         := cbCortarPapel.Checked;
+  ACBrPosPrinter1.EspacoEntreLinhas  := seEspLinhas.Value;
+  ACBrPosPrinter1.LinhasEntreCupons  := seLinhasPular.Value;
+  ACBrPosPrinter1.ColunasFonteNormal := seColunas.Value;
+
+  ACBrPosPrinter1.Ativar;
+  try
+    ACBrPosPrinter1.Buffer.Text := lista.Text;
+    ACBrPosPrinter1.Imprimir;
+  finally
+    ACBrPosPrinter1.Desativar;
+  end;
+
+  lista.free;
+end;
+
+procedure Tfconfig_impressora.carregarCampos;
+var
+  q1 : TFDQuery;
+begin
+  q1 := TFDQuery.Create(nil);
+  try
+    q1.Connection := dm.conexao;
+    q1.SQL.Clear;
+    q1.SQL.Add('select modelo_impressora, porta_imp, pagina_codigo_imp, corta_papel_imp,');
+    q1.SQL.Add('       espaco_entre_linhas_imp, linhas_entre_cupons_imp');
+    q1.SQL.Add('from param');
+    q1.SQL.Add('where id = :id');
+    q1.ParamByName('id').AsInteger := 1;
+    q1.Open;
+
+    if not q1.Eof then begin
+      cbxModelo.ItemIndex    := q1.FieldByName('modelo_impressora').AsInteger;
+      cbxPorta.Text          := q1.FieldByName('porta_imp').AsString;
+      cbxPagCodigo.ItemIndex := q1.FieldByName('pagina_codigo_imp').AsInteger;
+
+      cbCortarPapel.Checked := False;
+      if q1.FieldByName('corta_papel_imp').AsString = 'S' then
+        cbCortarPapel.Checked := True;
+
+      seEspLinhas.Value   := q1.FieldByName('espaco_entre_linhas_imp').AsInteger;
+      seLinhasPular.Value := q1.FieldByName('linhas_entre_cupons_imp').AsInteger;
+    end
+    else begin
+      limparCampos;
+    end;
+
+  finally
+    FreeAndNil(q1);
+  end;
+end;
+
+function Tfconfig_impressora.confereCampos: boolean;
+begin
+  Result := False;
+  if cbxModelo.Text = '' then begin
+    ShowMessage('Selecione o modelo!');
+    Exit;
+  end;
+
+  if cbxPorta.Text = '' then begin
+    ShowMessage('Selecione a porta!');
+    Exit;
+  end;
+
+  if cbxPagCodigo.Text = '' then begin
+    ShowMessage('Selecione a página de código!');
+    Exit;
+  end;
+
+  Result := True;
+end;
+
+procedure Tfconfig_impressora.FormCreate(Sender: TObject);
+var
+  I: TACBrPosPrinterModelo;
+  J: TACBrPosPaginaCodigo;
+begin
+  inherited;
+  limparCampos;
+
+  cbxModelo.Items.Clear;
+  for I := Low(TACBrPosPrinterModelo) to High(TACBrPosPrinterModelo) do
+     cbxModelo.Items.Add(GetEnumName(TypeInfo(TACBrPosPrinterModelo), integer(I)));
+
+  cbxPagCodigo.Items.Clear;
+  for J := Low(TACBrPosPaginaCodigo) to High(TACBrPosPaginaCodigo) do
+     cbxPagCodigo.Items.Add(GetEnumName(TypeInfo(TACBrPosPaginaCodigo), integer(J)));
+
+  cbxPorta.Items.Clear;
+  ACBrPosPrinter1.Device.AcharPortasSeriais( cbxPorta.Items );
+  ACBrPosPrinter1.Device.AcharPortasUSB( cbxPorta.Items );
+  ACBrPosPrinter1.Device.AcharPortasRAW( cbxPorta.Items );
+
+  carregarCampos;
+end;
+
+procedure Tfconfig_impressora.limparCampos;
+begin
+  cbxModelo.ItemIndex    := -1;
+  cbxPorta.ItemIndex     := -1;
+  cbxPagCodigo.ItemIndex := -1;
+  seColunas.Value        := 48;
+  seEspLinhas.Value      := 0;
+  seLinhasPular.Value    := 0;
+  cbCortarPapel.Checked  := True;
+end;
+
+end.

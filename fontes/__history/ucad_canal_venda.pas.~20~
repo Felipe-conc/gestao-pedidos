@@ -1,0 +1,149 @@
+unit ucad_canal_venda;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, uform_modelo_cadastro, Vcl.StdCtrls,
+  Vcl.ExtCtrls, FnpNumericEdit, Data.DB, Vcl.Grids, Vcl.DBGrids, udm,
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.DataSet, FireDAC.Comp.Client;
+
+type
+  Tfcad_canal_venda = class(Tfform_modelo_cadastro)
+    eDescricao: TEdit;
+    Label1: TLabel;
+    eCodigo: TEdit;
+    Label2: TLabel;
+    Label3: TLabel;
+    eTaxaFixa: TFnpNumericEdit;
+    gCanais: TDBGrid;
+    qCanalV: TFDQuery;
+    dsCanalV: TDataSource;
+    procedure FormShow(Sender: TObject);
+  private
+    { Private declarations }
+    procedure direcao(tag : integer); override;
+    procedure excluir; override;
+    procedure gravarRegistro; override;
+    procedure novoRegistro; override;
+    function  podeExcluir : boolean; override;
+    function  confereCampos : boolean; override;
+
+    procedure carregaCampos(AId : integer);
+    procedure limpaCampos;
+  public
+    { Public declarations }
+  end;
+
+var
+  fcad_canal_venda: Tfcad_canal_venda;
+
+implementation
+
+{$R *.dfm}
+
+uses uclass_canal_venda;
+
+{ Tfcad_fonte_renda }
+
+
+procedure Tfcad_canal_venda.carregaCampos(AId: integer);
+begin
+  with Tabela as TTab_canal_venda do begin
+    carregar(AId);
+    if TabFlag = 'A' then begin
+      eCodigo.Text         := IntToStr(Codigo);
+      eDescricao.Text      := Descricao;
+      eTaxaFixa.Value      := Valor_taxa_fixa;
+    end
+    else begin
+      novoRegistro;
+    end;
+  end;
+end;
+
+function Tfcad_canal_venda.confereCampos: boolean;
+begin
+  Result := False;
+  if Trim(eDescricao.Text) = '' then begin
+    ShowMessage('Descrição é obrigatória!');
+    Exit;
+  end;
+  Result := True;
+end;
+
+procedure Tfcad_canal_venda.direcao(tag: integer);
+begin
+  inherited;
+  with Tabela as TTab_canal_venda do begin
+    Codigo := StrToInt(eCodigo.Text);
+    direcao(tag);
+
+    if TabFlag = 'A' then
+      carregaCampos(Codigo);
+  end;
+end;
+
+procedure Tfcad_canal_venda.excluir;
+begin
+  inherited;
+  with Tabela as TTab_canal_venda do begin
+    Codigo := StrToInt(eCodigo.Text);
+
+    if not podeExcluir then begin
+      ShowMessage('Este registro está vinculado a outras tabelas e não pode ser excluído!');
+      Exit;
+    end;
+    excluir;
+  end;
+  novoRegistro;
+end;
+
+procedure Tfcad_canal_venda.FormShow(Sender: TObject);
+begin
+  inherited;
+  Tabela := TTab_canal_venda.create;
+  novoRegistro;
+end;
+
+procedure Tfcad_canal_venda.gravarRegistro;
+begin
+  inherited;
+  with Tabela as TTab_canal_venda do begin
+    Codigo            := StrToInt(eCodigo.Text);
+    Descricao         := Trim(eDescricao.Text);
+    Valor_taxa_fixa   := eTaxaFixa.Value;
+    gravar;
+  end;
+  novoRegistro;
+end;
+
+procedure Tfcad_canal_venda.limpaCampos;
+begin
+  eCodigo.Text         := '';
+  eDescricao.Text      := '';
+  eTaxaFixa.Value      := 0;
+  eDescricao.SetFocus;
+
+  qCanalV.Close;
+  qCanalV.Open;
+end;
+
+procedure Tfcad_canal_venda.novoRegistro;
+begin
+  inherited;
+  limpaCampos;
+  with Tabela as TTab_canal_venda do begin
+    limparCampos;
+    eCodigo.Text := IntToStr(proximaChave);
+  end;
+end;
+
+function Tfcad_canal_venda.podeExcluir: boolean;
+begin
+  Result := True;
+end;
+
+end.

@@ -1,0 +1,130 @@
+unit ucad_fonte_renda;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, uform_modelo_cadastro, Vcl.StdCtrls,
+  Vcl.ExtCtrls, FnpNumericEdit;
+
+type
+  Tfcad_fonte_renda = class(Tfform_modelo_cadastro)
+    eDescricao: TEdit;
+    Label1: TLabel;
+    eCodigo: TEdit;
+    Label2: TLabel;
+    Label3: TLabel;
+    cbTipoTaxa: TComboBox;
+    Label4: TLabel;
+    Label5: TLabel;
+    ePorcentagem: TFnpNumericEdit;
+    eTaxaFixa: TFnpNumericEdit;
+    procedure FormShow(Sender: TObject);
+  private
+    { Private declarations }
+    procedure direcao(tag : integer); override;
+    procedure excluir; override;
+    procedure gravarRegistro; override;
+    procedure novoRegistro; override;
+    function  podeExcluir : boolean; override;
+    function  confereCampos : boolean; override;
+    procedure carregaCampos(AId : integer);
+    procedure limpaCampos;
+  public
+    { Public declarations }
+  end;
+
+var
+  fcad_fonte_renda: Tfcad_fonte_renda;
+
+implementation
+
+{$R *.dfm}
+
+uses uclass_fonte_renda;
+
+{ Tfcad_fonte_renda }
+
+procedure Tfcad_fonte_renda.carregaCampos(AId: integer);
+begin
+  with Tabela as TTab_fonte_renda do begin
+    carregar(AId);
+    if TabFlag = 'A' then begin
+      eDescricao.Text      := Descricao;
+      cbTipoTaxa.ItemIndex := TipoTaxa;
+      eTaxaFixa.Value      := Valor_taxa_fixa;
+      ePorcentagem.Value   := Valor_porcentagem;
+    end
+    else begin
+      novoRegistro;
+    end;
+  end;
+end;
+
+function Tfcad_fonte_renda.confereCampos: boolean;
+begin
+  if Trim(eDescricao.Text) = '' then begin
+    ShowMessage('Descrição é obrigatória!');
+    Exit;
+  end;
+
+  if cbTipoTaxa.ItemIndex = -1 then begin
+    ShowMessage('Selecione um tipo de taxa!');
+    Exit;
+  end;
+  Result := True;
+end;
+
+procedure Tfcad_fonte_renda.direcao(tag: integer);
+begin
+  inherited;
+
+end;
+
+procedure Tfcad_fonte_renda.excluir;
+begin
+  inherited;
+
+end;
+
+procedure Tfcad_fonte_renda.FormShow(Sender: TObject);
+begin
+  inherited;
+  Tabela := TTab_fonte_renda.create;
+  novoRegistro;
+end;
+
+procedure Tfcad_fonte_renda.gravarRegistro;
+begin
+  inherited;
+  with Tabela as TTab_fonte_renda do begin
+    Codigo    := StrToInt(eCodigo.Text);
+    Descricao := Trim(eDescricao.Text);
+    gravar;
+  end;
+  novoRegistro;
+end;
+
+procedure Tfcad_fonte_renda.limpaCampos;
+begin
+  eCodigo.Text         := '';
+  eDescricao.Text      := '';
+  cbTipoTaxa.ItemIndex := -1;
+  eTaxaFixa.Value      := 0;
+  ePorcentagem.Value   := 0;
+  eDescricao.SetFocus;
+end;
+
+procedure Tfcad_fonte_renda.novoRegistro;
+begin
+  inherited;
+  limpaCampos;
+  Tabela.limparCampos;
+end;
+
+function Tfcad_fonte_renda.podeExcluir: boolean;
+begin
+
+end;
+
+end.

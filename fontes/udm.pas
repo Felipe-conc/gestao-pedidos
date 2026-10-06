@@ -1,0 +1,114 @@
+unit udm;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, frxClass, frxExportBaseDialog, frxExportPDF,
+  FireDAC.Stan.ExprFuncs, FireDAC.Phys.SQLiteDef, FireDAC.Stan.Intf,
+  FireDAC.Phys, FireDAC.Phys.SQLite, FireDAC.UI.Intf, FireDAC.VCLUI.Wait,
+  FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Phys.Intf, FireDAC.Stan.Def,
+  FireDAC.Stan.Pool, FireDAC.Stan.Async, Data.DB, FireDAC.Comp.Client,
+  FireDAC.Comp.UI;
+
+type
+  Tdm = class(TDataModule)
+    sqlite_link: TFDPhysSQLiteDriverLink;
+    fd_cursor: TFDGUIxWaitCursor;
+    conexao: TFDConnection;
+    procedure DataModuleCreate(Sender: TObject);
+  private
+    { Private declarations }
+    procedure atualizaBD;
+  public
+    { Public declarations }
+  end;
+
+var
+  dm: Tdm;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+uses
+  uglobal_vars;
+
+{ Tdm }
+
+procedure Tdm.atualizaBD;
+var
+  q1 : TFDQuery;
+begin
+  q1 := TFDQuery.Create(nil);
+  try
+    q1.Connection := conexao;
+    q1.Close;
+    q1.SQL.Clear;
+
+    q1.SQL.Add('CREATE TABLE IF NOT EXISTS pedidos(');
+    q1.SQL.Add('  id INTEGER PRIMARY KEY,');
+    q1.SQL.Add('  json TEXT,');
+    q1.SQL.Add('  status INTEGER DEFAULT 0,');
+    q1.SQL.Add('  data DATETIME,');
+    q1.SQL.Add('  codigo_descricao INTEGER DEFAULT 0,');
+    q1.SQL.Add('  foi_enviado_whatsapp TEXT DEFAULT ''N'' CHECK (foi_enviado_whatsapp IN (''S'', ''N'')),');
+    q1.SQL.Add('  id_canal_venda INTEGER,');
+    q1.SQL.Add('  id_estabelecimento INTEGER NOT NULL,');
+    q1.SQL.Add('  FOREIGN KEY(id_canal_venda) REFERENCES canal_venda(id)');
+    q1.SQL.Add(');');
+
+    q1.SQL.Add('CREATE TABLE IF NOT EXISTS canal_venda(');
+    q1.SQL.Add('  id INTEGER PRIMARY KEY AUTOINCREMENT,');
+    q1.SQL.Add('  descricao TEXT,');
+    q1.SQL.Add('  taxa_fixa NUMERIC(6,3) DEFAULT 0,');
+    q1.SQL.Add('  id_estabelecimento INTEGER NOT NULL');
+    q1.SQL.Add(');');
+
+    q1.SQL.Add('CREATE TABLE IF NOT EXISTS venda_externa (');
+    q1.SQL.Add('  id INTEGER PRIMARY KEY AUTOINCREMENT,');
+    q1.SQL.Add('  data_venda DATETIME NOT NULL,');
+    q1.SQL.Add('  id_canal_venda INTEGER NOT NULL,');
+    q1.SQL.Add('  valor_bruto NUMERIC(10,2) DEFAULT 0,');
+    q1.SQL.Add('  numero_pedidos INTEGER DEFAULT 0,');
+    q1.SQL.Add('  taxa_servico NUMERIC(6,3) DEFAULT 0,');
+    q1.SQL.Add('  taxa_adicional NUMERIC(6,3) DEFAULT 0,');
+    q1.SQL.Add('  id_estabelecimento INTEGER NOT NULL,');
+    q1.SQL.Add('  FOREIGN KEY(id_canal_venda) REFERENCES canal_venda(id)');
+    q1.SQL.Add(');');
+
+    q1.SQL.Add('CREATE TABLE IF NOT EXISTS param (');
+    q1.SQL.Add('  id INTEGER PRIMARY KEY,');
+    q1.SQL.Add('  id_estabelecimento INTEGER NOT NULL,');
+    q1.SQL.Add('  modelo_impressora INTEGER,');
+    q1.SQL.Add('  porta_imp TEXT,');
+    q1.SQL.Add('  pagina_codigo_imp INTEGER,');
+    q1.SQL.Add('  corta_papel_imp TEXT,');
+    q1.SQL.Add('  espaco_entre_linhas_imp INTEGER,');
+    q1.SQL.Add('  linhas_entre_cupons_imp INTEGER,');
+    q1.SQL.Add('  colunas_imp INTEGER');
+    q1.SQL.Add(');');
+
+    q1.ExecSQL;
+
+    conexao.commit;
+  finally
+    FreeAndNil(q1);
+  end;
+end;
+
+procedure Tdm.DataModuleCreate(Sender: TObject);
+begin
+  conexao.Params.Clear;
+  conexao.Params.Add('DriverID=SQLite');
+  conexao.Params.Add('Database='+gb_database);
+  conexao.Params.Add('LockingMode=Normal');
+  conexao.LoginPrompt := False;
+  conexao.Connected   := True;
+  conexao.ExecSQL('PRAGMA foreign_keys = ON;');
+
+  atualizaBD;
+end;
+
+end.

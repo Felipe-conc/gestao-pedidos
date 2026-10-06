@@ -1,0 +1,22 @@
+unit uclass_controle_tabela;
+
+interface
+
+type
+  TControleTabela = class
+    public
+      Constructor create;
+      procedure gravar; virtual; abstract;
+      procedure limparCampos; virtual; abstract;
+  end;
+
+implementation
+
+{ TControleTabela }
+
+constructor TControleTabela.create;
+begin
+  limparCampos;
+end;
+
+end.

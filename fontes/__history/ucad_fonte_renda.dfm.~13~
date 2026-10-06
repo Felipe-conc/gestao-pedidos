@@ -1,0 +1,139 @@
+inherited fcad_fonte_renda: Tfcad_fonte_renda
+  Caption = 'Cadastro de Fonte de Renda'
+  ClientHeight = 293
+  Position = poDesktopCenter
+  OnShow = FormShow
+  ExplicitHeight = 332
+  PixelsPerInch = 96
+  TextHeight = 13
+  inherited Panel1: TPanel
+    Height = 293
+    ExplicitHeight = 293
+  end
+  inherited Panel2: TPanel
+    Height = 293
+    ExplicitHeight = 293
+    object Label1: TLabel [0]
+      Left = 179
+      Top = 96
+      Width = 50
+      Height = 13
+      Caption = 'Descri'#231#227'o:'
+    end
+    object Label2: TLabel [1]
+      Left = 179
+      Top = 69
+      Width = 37
+      Height = 13
+      Caption = 'C'#243'digo:'
+    end
+    object Label3: TLabel [2]
+      Left = 179
+      Top = 150
+      Width = 78
+      Height = 13
+      Caption = 'Valor Taxa Fixa:'
+    end
+    object Label4: TLabel [3]
+      Left = 179
+      Top = 123
+      Width = 66
+      Height = 13
+      Caption = 'Tipo de Taxa:'
+    end
+    object Label5: TLabel [4]
+      Left = 396
+      Top = 150
+      Width = 94
+      Height = 13
+      Caption = 'Valor Porcentagem:'
+    end
+    inherited Panel3: TPanel
+      Top = 242
+      ExplicitTop = 242
+      ExplicitWidth = 798
+      inherited bFechar: TButton
+        ExplicitLeft = 698
+        ExplicitTop = 8
+        ExplicitHeight = 37
+      end
+      inherited bExcluir: TButton
+        ExplicitLeft = 599
+        ExplicitTop = 8
+        ExplicitHeight = 37
+      end
+      inherited bProximo: TButton
+        ExplicitTop = 8
+      end
+      inherited bUltimo: TButton
+        ExplicitLeft = 302
+        ExplicitTop = 8
+        ExplicitHeight = 37
+      end
+      inherited bNovo: TButton
+        ExplicitLeft = 401
+        ExplicitTop = 8
+        ExplicitHeight = 37
+      end
+      inherited bGravar: TButton
+        ExplicitLeft = 500
+        ExplicitTop = 8
+        ExplicitHeight = 37
+      end
+      inherited bAnterior: TButton
+        ExplicitLeft = 104
+        ExplicitTop = 8
+        ExplicitHeight = 37
+      end
+      inherited bPrimeiro: TButton
+        ExplicitLeft = 5
+        ExplicitTop = 8
+        ExplicitHeight = 37
+      end
+    end
+    object eDescricao: TEdit
+      Left = 269
+      Top = 93
+      Width = 348
+      Height = 21
+      TabOrder = 1
+    end
+    object eCodigo: TEdit
+      Left = 269
+      Top = 66
+      Width = 63
+      Height = 21
+      Enabled = False
+      TabOrder = 2
+    end
+    object cbTipoTaxa: TComboBox
+      Left = 269
+      Top = 120
+      Width = 348
+      Height = 21
+      TabOrder = 3
+      OnClick = cbTipoTaxaClick
+      Items.Strings = (
+        'Sem taxa'
+        'Taxa Fixa'
+        'Porcentagem'
+        'Fixa + porcentagem')
+    end
+    object ePorcentagem: TFnpNumericEdit
+      Left = 500
+      Top = 147
+      Width = 117
+      Height = 21
+      Alignment = taRightJustify
+      TabOrder = 4
+    end
+    object eTaxaFixa: TFnpNumericEdit
+      Left = 269
+      Top = 147
+      Width = 121
+      Height = 21
+      Alignment = taRightJustify
+      TabOrder = 5
+    end
+  end
+end

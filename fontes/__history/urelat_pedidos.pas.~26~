@@ -1,0 +1,357 @@
+unit urelat_pedidos;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, uform_modelo_modal,
+  Vcl.Imaging.pngimage, Vcl.ExtCtrls, uprincipal, Vcl.StdCtrls, Vcl.Mask,
+  RxToolEdit, udm, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.Client, Data.DB,
+  FireDAC.Comp.DataSet, System.JSON, frxClass, frxDBSet,
+  System.DateUtils;
+
+type
+  TfRelat_pedidos = class(Tfform_modelo_modal)
+    Panel3: TPanel;
+    Panel4: TPanel;
+    Label1: TLabel;
+    eDataDe: TRxDateEdit;
+    Label2: TLabel;
+    eDataAte: TRxDateEdit;
+    bSair: TButton;
+    bOk: TButton;
+    Bevel1: TBevel;
+    memItens: TFDMemTable;
+    memItensId: TIntegerField;
+    memItensNome: TStringField;
+    memItensQuantidade: TIntegerField;
+    memItensPreco_total: TFloatField;
+    memItensObservacao: TStringField;
+    memPedido: TFDMemTable;
+    memPedidoId: TIntegerField;
+    memPedidoImpresso: TStringField;
+    memPedidoDescricao: TStringField;
+    memPedidoObservacao: TStringField;
+    memPedidoPreco_total: TFloatField;
+    memPedidoEndereco: TStringField;
+    memPedidoData: TDateTimeField;
+    memPedidoFormas_pagt: TStringField;
+    memPedidoStatus: TStringField;
+    memPedidoIdx_status: TIntegerField;
+    dsItens: TDataSource;
+    dsPedido: TDataSource;
+    qRelat: TFDQuery;
+    dsRelat: TDataSource;
+    cbStatus: TComboBox;
+    Label3: TLabel;
+    frRelatorio: TfrxReport;
+    frqPedidos: TfrxDBDataset;
+    frqItens: TfrxDBDataset;
+    memItensIdPedido: TIntegerField;
+    rgTipo: TRadioGroup;
+    rgAgrupamento: TRadioGroup;
+    frSintetico: TfrxReport;
+    frProduto: TfrxReport;
+    memProdutos: TFDMemTable;
+    dsProdutos: TDataSource;
+    memProdutosNome: TStringField;
+    memProdutosQuantidade: TIntegerField;
+    frqProdutos: TfrxDBDataset;
+    memPedidoDataFormatada: TStringField;
+    memSintetico: TFDMemTable;
+    dsSintetico: TDataSource;
+    memSinteticoTotalPedidos: TIntegerField;
+    memSinteticoValorTotal: TFloatField;
+    frqSintetico: TfrxDBDataset;
+    memSinteticoData: TStringField;
+    procedure bOkClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure bSairClick(Sender: TObject);
+  private
+    { Private declarations }
+    FCodigo : integer;
+    procedure limparCampos;
+    procedure carregaMemTable(AObj : TJSONObject; AId, AStatus : integer; ADescricao : string);
+    function  GetStrOrEmpty(AObj: TJSONObject; const AName: string): string;
+  public
+    { Public declarations }
+  end;
+
+var
+  fRelat_pedidos: TfRelat_pedidos;
+
+implementation
+
+{$R *.dfm}
+
+uses uglobal_vars, ulib_fortesreport, udm_fastreport;
+
+{ TfRelat_pedidos }
+
+
+procedure TfRelat_pedidos.bOkClick(Sender: TObject);
+var
+  vObj : TJSONObject;
+  vId, TotalPedidos : integer;
+  ValorTotal: Double;
+  mem_rel : TMemoryStream;
+  vDescricao, vFiltro : string;
+begin
+  inherited;
+  memPedido.EmptyDataSet;
+  memItens.EmptyDataSet;
+  memProdutos.EmptyDataSet;
+
+  with qRelat do begin
+    Close;
+    SQL.Clear;
+    SQL.Add('select id, json, status, data, ');
+    SQL.Add('      (select count(*) from pedidos) as total, codigo_descricao');
+    SQL.Add('from pedidos');
+    SQL.Add('where 1 = 1');
+
+    if eDataDe.Date > 0 then begin
+      SQL.Add('and data >= :datade');
+      ParamByName('datade').AsDateTime := eDataDe.Date;
+    end;
+
+    if eDataAte.Date > 0 then begin
+      SQL.Add('and data < :dataate');
+      ParamByName('dataate').AsDateTime := IncDay(eDataAte.Date, 1);
+    end;
+
+    if cbStatus.ItemIndex <> 0 then begin
+      SQL.Add('and status = :status');
+      ParamByName('status').AsInteger := cbStatus.ItemIndex - 1;
+    end;
+
+    Open;
+  end;
+
+  if qRelat.IsEmpty then begin
+    ShowMessage('Nenhum registro foi encontrado!');
+    Exit;
+  end;
+
+  while not qRelat.Eof do begin
+    vObj := TJSONObject(TJSONObject.ParseJSONValue(qRelat.FieldByName('json').AsString));
+    vId  := StrToInt(vObj.GetValue('id').Value);
+
+    if memPedido.Locate('Id', vId, []) then begin
+      qRelat.Next;
+      Continue;
+    end;
+
+    carregaMemTable(vObj, vId, qRelat.FieldByName('status').AsInteger,
+                    IntToStr(qRelat.FieldByName('codigo_descricao').AsInteger));
+//    FCodigo := FCodigo + 1;
+    qRelat.Next;
+  end;
+
+  vFiltro := '';
+  if (eDataDe.Date = eDataAte.Date) then begin
+    vFiltro := 'Período do dia : ' + eDataDe.Text;
+  end
+  else begin
+      if eDataDe.Date > 0 then begin
+      vFiltro := 'Período de : ' + eDataDe.Text;
+    end;
+
+    if eDataAte.Date > 0 then begin
+      if eDataDe.Date <= 0 then
+        vFiltro := vFiltro + 'Período';
+      vFiltro := vFiltro + ' até : ' + eDataAte.Text;
+    end;
+  end;
+
+  if rgAgrupamento.ItemIndex = 1 then begin
+    memProdutos.IndexFieldNames := 'Quantidade:D';
+    frProduto.Variables['filtro'] := QuotedStr(vFiltro);
+    frProduto.ShowReport;
+    Exit;
+  end;
+
+  if rgTipo.ItemIndex = 0 then begin
+    TotalPedidos := 0;
+    ValorTotal   := 0.0;
+
+    memPedido.First;
+    while not memPedido.EOF do begin
+      Inc(TotalPedidos);
+      ValorTotal := ValorTotal + memPedidoPreco_total.AsFloat;
+      memPedido.Next;
+    end;
+
+    if cbStatus.ItemIndex <> 0 then begin
+      if vFiltro <> '' then
+        vFiltro := vFiltro + '  /  Status : ' + cbStatus.Text
+      else
+        vFiltro := 'Status : ' + cbStatus.Text
+    end;
+
+    frRelatorio.Variables['total_pedidos'] := TotalPedidos;
+    frRelatorio.Variables['valor_total']   := ValorTotal;
+    frRelatorio.Variables['filtro']        := QuotedStr(vFiltro);
+    frRelatorio.ShowReport;
+  end
+  else begin
+    memSintetico.EmptyDataSet;
+
+    memPedido.First;
+    while not memPedido.Eof do begin
+      if memSintetico.Locate('Data', memPedidoDataFormatada.AsString, []) then begin
+        memSintetico.Edit;
+        memSinteticoTotalPedidos.AsInteger := memSinteticoTotalPedidos.AsInteger + 1;
+        memSinteticoValorTotal.AsFloat     := memSinteticoValorTotal.AsFloat +
+                                              memPedidoPreco_total.AsFloat;
+        memSintetico.Post
+      end
+      else begin
+        memSintetico.Append;
+        memSinteticoData.AsString          := memPedidoDataFormatada.AsString;
+        memSinteticoTotalPedidos.AsInteger := 1;
+        memSinteticoValorTotal.AsFloat     := memPedidoPreco_total.AsFloat;
+        memSintetico.Post
+      end;
+      memPedido.Next;
+    end;
+
+    frSintetico.Variables['filtro'] := QuotedStr(vFiltro);
+    frSintetico.ShowReport;
+  end;
+
+
+//  mem_rel := buscaRelatStream('rel_pedidos');
+//  if mem_rel <> nil then begin
+//    dm_fastreport.frRelat.LoadFromStream(mem_rel);
+//    dm_fastreport.frRelat.Report.FileName := 'Relatório de Pedidos';
+//    dm_fastreport.frRelat.Report.DataSets.Clear;
+//    dm_fastreport.frRelat.DataSets.Add(frqPedidos);
+//    dm_fastreport.frRelat.DataSets.Add(frqItens);
+//    dm_fastreport.frRelat.Variables['total_pedidos'] := TotalPedidos;
+//    dm_fastreport.frRelat.Variables['valor_total']   := ValorTotal;
+//    dm_fastreport.frRelat.ShowReport;
+//  end
+//  else begin
+//    ShowMessage('O arquivo do relatório não foi encontrado. Entre em contato com o suporte do sistema!');
+//  end;
+//  mem_rel.Free;
+end;
+
+procedure TfRelat_pedidos.bSairClick(Sender: TObject);
+begin
+  inherited;
+  Close;
+end;
+
+procedure TfRelat_pedidos.carregaMemTable(AObj: TJSONObject; AId, AStatus: integer; ADescricao : string);
+var
+  vDataStr, vFormaStr : string;
+  vItens, vFormasPagt : TJSONArray;
+  vObj, vCupom : TJSONObject;
+  vInt, vInt2 : Integer;
+  vData : TDateTime;
+begin
+  vCupom := TJSONObject(TJSONObject.ParseJSONValue(AObj.GetValue('cupom').Value));
+
+  memPedido.Append;
+  memPedidoId.AsInteger         := AId;
+  memPedidoDescricao.AsString   := 'Pedido #' + ADescricao;
+//  memPedidoDescricao.AsString   := 'Pedido #' + IntToStr(gb_codigo);
+  memPedidoPreco_total.AsString := vCupom.GetValue('preco_total').Value;
+  memPedidoObservacao.AsString  := GetStrOrEmpty(vCupom, 'observacao');
+  memPedidoEndereco.AsString    := GetStrOrEmpty(vCupom, 'endereco');
+  memPedidoIdx_status.AsInteger := AStatus;
+
+  case AStatus of
+    0: memPedidoStatus.AsString := 'Confirmado';
+    1: memPedidoStatus.AsString := 'Em preparo';
+    2: memPedidoStatus.AsString := 'Pronto';
+    3: memPedidoStatus.AsString := 'Saiu para Entrega';
+    4: memPedidoStatus.AsString := 'Entregue';
+    5: memPedidoStatus.AsString := 'Cancelado';
+  end;
+
+  vFormaStr := '';
+  vFormasPagt := TJSONArray(vCupom.GetValue('formas_pagamento'));
+  for vInt := 0 to Pred(vFormasPagt.Count) do begin
+    if vFormaStr <> '' then
+      vFormaStr := vFormaStr + ', ';
+
+    vFormaStr := vFormaStr + vFormasPagt.Items[vInt].Value;
+  end;
+
+  memPedidoFormas_pagt.AsString := vFormaStr;
+
+  if AObj.TryGetValue<string>('data', vDataStr) and (vDataStr <> '') then begin
+    vData := ISO8601ToDate(vDataStr);
+    memPedidoData.AsDateTime := vData;
+    memPedidoDataFormatada.AsString := FormatDateTime('dd/mm/yyyy', vData);
+  end
+  else begin
+    memPedidoData.Clear;
+  end;
+
+  memPedido.Post;
+
+  vItens := TJSONArray(vCupom.GetValue('pedidos'));
+  for vInt2 := 0 to Pred(vItens.Count) do begin
+    vObj := TJSONObject(vItens.Items[vInt2]);
+    memItens.Append;
+    memItensId.AsInteger         := AId;
+//    memItensIdPedido.AsInteger   := AId;
+    memItensNome.AsString        := GetStrOrEmpty(vObj, 'nome');
+    memItensQuantidade.AsInteger := StrToInt(vObj.GetValue('quantidade').Value);
+    memItensPreco_total.AsFloat  := StrToFloat(vObj.GetValue('preco_total').Value);
+    memItensObservacao.AsString  := GetStrOrEmpty(vObj, 'observacao');
+    memItens.Post;
+
+    if memProdutos.Locate(memProdutosNome.FieldName, memItensNome.AsString, []) then begin
+      memProdutos.Edit;
+      memProdutosQuantidade.AsInteger := memProdutosQuantidade.AsInteger + memItensQuantidade.AsInteger;
+      memProdutos.Post;
+    end
+    else begin
+      memProdutos.Append;
+      memProdutosNome.AsString        := memItensNome.AsString;
+      memProdutosQuantidade.AsInteger := memItensQuantidade.AsInteger;
+      memProdutos.Post;
+    end;
+  end;
+end;
+
+procedure TfRelat_pedidos.FormCreate(Sender: TObject);
+begin
+  inherited;
+  memPedido.Close;
+  memPedido.Open;
+
+  memItens.Close;
+  memItens.Open;
+
+  memProdutos.Close;
+  memProdutos.Open;
+
+  limparCampos;
+end;
+
+function TfRelat_pedidos.GetStrOrEmpty(AObj: TJSONObject;
+  const AName: string): string;
+begin
+  if not AObj.TryGetValue<string>(AName, Result) then
+    Result := '';
+end;
+
+procedure TfRelat_pedidos.limparCampos;
+begin
+  rgTipo.ItemIndex        := 0;
+  rgAgrupamento.ItemIndex := 0;
+  cbStatus.ItemIndex      := 0;
+  cbStatus.Enabled        := True;
+  eDataDe.Date            := Date;
+  eDataAte.Date           := Date;
+end;
+
+end.

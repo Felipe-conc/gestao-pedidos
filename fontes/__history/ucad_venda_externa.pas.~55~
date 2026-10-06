@@ -1,0 +1,404 @@
+unit ucad_venda_externa;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, uform_modelo_cadastro, Vcl.StdCtrls,
+  Vcl.ExtCtrls, FnpNumericEdit, Vcl.DBCtrls, Vcl.Mask, RxToolEdit, udm,
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, Data.DB, FireDAC.Comp.DataSet,
+  FireDAC.Comp.Client, Vcl.Grids, Vcl.DBGrids;
+
+type
+  Tfcad_venda_externa = class(Tfform_modelo_cadastro)
+    eData: TRxDateEdit;
+    Label1: TLabel;
+    eNrPedidos: TEdit;
+    Label2: TLabel;
+    cbCanalVenda: TDBLookupComboBox;
+    Label3: TLabel;
+    eValorBruto: TFnpNumericEdit;
+    Label4: TLabel;
+    GroupBox1: TGroupBox;
+    Label5: TLabel;
+    lValorBruto: TLabel;
+    Label7: TLabel;
+    lTotalTaxa: TLabel;
+    Label9: TLabel;
+    lValorLiquido: TLabel;
+    lTxServ: TLabel;
+    Label8: TLabel;
+    eTxServAdicional: TFnpNumericEdit;
+    qCanalVenda: TFDQuery;
+    dsCanalVenda: TDataSource;
+    eTxServ: TFnpNumericEdit;
+    qCanalVendaid: TFDAutoIncField;
+    qCanalVendadescricao_exibir: TWideStringField;
+    gVendas: TDBGrid;
+    eCodCanalV: TEdit;
+    Panel4: TPanel;
+    Button1: TButton;
+    qVendas: TFDQuery;
+    dsVendas: TDataSource;
+    Button2: TButton;
+    Button3: TButton;
+    Button4: TButton;
+    procedure FormCreate(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure eValorBrutoExit(Sender: TObject);
+    procedure eTxServExit(Sender: TObject);
+    procedure eTxServFixaExit(Sender: TObject);
+    procedure eTxServAdicionalExit(Sender: TObject);
+    procedure eDataChange(Sender: TObject);
+    procedure cbCanalVendaClick(Sender: TObject);
+    procedure eCodCanalVExit(Sender: TObject);
+    procedure gVendasDblClick(Sender: TObject);
+    procedure bNovoClick(Sender: TObject);
+    procedure bExcluirClick(Sender: TObject);
+  private
+    { Private declarations }
+    FTxServico : currency;
+    FEdicao : boolean;
+    procedure direcao(tag : integer); override;
+    procedure excluir; override;
+    procedure gravarRegistro; override;
+    procedure novoRegistro; override;
+    function  podeExcluir : boolean; override;
+    function  confereCampos : boolean; override;
+    procedure carregaCampos(AId : integer);
+    procedure limpaCampos;
+
+    procedure atualizarResumo;
+    procedure buscaCanalVenda;
+    procedure AtualizarGrid;
+
+  public
+    { Public declarations }
+  end;
+
+var
+  fcad_venda_externa: Tfcad_venda_externa;
+
+implementation
+
+{$R *.dfm}
+
+uses uclass_venda_externa;
+
+procedure Tfcad_venda_externa.AtualizarGrid;
+begin
+  qVendas.Close;
+  with Tabela as TTab_venda_externa do
+    carregaVendasDia(qVendas, eData.Date);
+end;
+
+procedure Tfcad_venda_externa.atualizarResumo;
+var
+  vValorBruto, vTaxas, vValorLiquido : double;
+begin
+  vValorBruto   := eValorBruto.Value;
+
+  if (eValorBruto.Value <> 0) and (eTxServ.Value <> 0) then begin
+    FTxServico := (eTxServ.Value / vValorBruto) * 100;
+  end;
+
+  eTxServ.Value := (vValorBruto * (FTxServico / 100));
+  vTaxas        := eTxServAdicional.Value + eTxServ.Value;
+  vValorLiquido := vValorBruto - vTaxas;
+
+  lValorBruto.Caption   := 'R$ ' + FormatFloat('0.00', vValorBruto);
+  lTotalTaxa.Caption    := '- R$ ' + FormatFloat('0.00', vTaxas);
+  lValorLiquido.Caption := 'R$ ' + FormatFloat('0.00', vValorLiquido);
+
+  lValorBruto.Width   := 216;
+  lValorLiquido.Width := 216;
+  lTotalTaxa.Width    := 216;
+
+  lTxServ.Caption := 'Taxa Serviço ('+CurrToStr(FTxServico)+'%):';
+end;
+
+procedure Tfcad_venda_externa.bExcluirClick(Sender: TObject);
+begin
+//  inherited;
+  if not podeExcluir then begin
+    Application.MessageBox('Não é possível excluir esse registro!','Aviso',MB_OK+MB_ICONSTOP);
+  end
+  else begin
+    if MessageDlg(
+         'Deseja excluir essa venda do ' +
+         gVendas.DataSource.DataSet.FieldByName('descricao').AsString +
+         ' do dia ' +
+         gVendas.DataSource.DataSet.FieldByName('data_venda').AsString +
+         ' ?',
+         mtConfirmation,
+         [mbYes, mbNo],
+         0
+       ) = mrNo then
+    begin
+      Exit;
+    end;
+    excluir;
+  end;
+end;
+
+procedure Tfcad_venda_externa.bNovoClick(Sender: TObject);
+begin
+  inherited;
+  eData.Date := Date;
+end;
+
+procedure Tfcad_venda_externa.buscaCanalVenda;
+var
+  q1 : TFDQuery;
+begin
+  q1 := TFDQuery.Create(nil);
+  try
+    q1.Connection := dm.conexao;
+    q1.Close;
+    q1.SQL.Clear;
+    q1.SQL.Add('select id, descricao, taxa_fixa');
+    q1.SQL.Add('from canal_venda');
+    q1.SQL.Add('where id = :id');
+    q1.ParamByName('id').AsInteger := StrToInt(eCodCanalV.Text);
+    q1.Open;
+    if not q1.Eof then begin
+      cbCanalVenda.KeyValue := q1.FieldByName('id').AsInteger;
+      lTxServ.Caption       := 'Taxa Serviço ('+q1.FieldByName('taxa_fixa').AsString+'%):';
+      eTxServ.Value         := 0;
+      FTxServico            := q1.FieldByName('taxa_fixa').AsCurrency;
+      atualizarResumo;
+    end
+    else begin
+      eCodCanalV.Text       := '';
+      cbCanalVenda.KeyValue := Null;
+      eTxServ.Value         := 0;
+      FTxServico            := 0;
+      ShowMessage('Canal de Venda não encontrado!');
+    end;
+  finally
+    FreeAndNil(q1);
+  end;              
+end;
+
+procedure Tfcad_venda_externa.carregaCampos(AId: integer);
+begin
+  with Tabela as TTab_venda_externa do begin
+    carregar(AId);
+    if TabFlag = 'A' then begin
+      eData.Date             := DataVenda;
+      eNrPedidos.Text        := IntToStr(NumeroPedidos);
+      cbCanalVenda.KeyValue  := IdCanalVenda;
+      eCodCanalV.Text        := IntToStr(IdCanalVenda);
+      eValorBruto.Value      := ValorBruto;
+      eTxServ.Value          := Taxa_servico;
+      eTxServAdicional.Value := Taxa_servico_adicional;
+
+      atualizarResumo;
+    end
+    else begin
+      novoRegistro;
+    end;
+  end;
+end;
+
+procedure Tfcad_venda_externa.cbCanalVendaClick(Sender: TObject);
+begin
+  inherited;
+  if cbCanalVenda.Text <> '' then begin
+    eCodCanalV.Text := IntToStr(qCanalVendaid.AsInteger);
+    eCodCanalVExit(nil);
+  end;
+end;
+
+function Tfcad_venda_externa.confereCampos: boolean;
+begin
+  Result := False;
+  if cbCanalVenda.KeyValue = Null then begin
+    ShowMessage('Selecione uma fonte de renda!');
+    Exit;
+  end;
+
+  if eValorBruto.Value <= 0 then begin
+    ShowMessage('Informe o valor bruto!');
+    Exit;
+  end;
+
+  if not FEdicao then begin
+    with Tabela as TTab_venda_externa do begin
+      if canalVendaHoje(StrToInt(eCodCanalV.Text), eData.Date) then begin
+        ShowMessage('Você já cadastrou uma venda para esse canal hoje!');
+        Exit;
+      end;
+    end;
+
+    if MessageBox(WindowHandle,'Deseja gravar esta venda? Lembre-se de que é permitida apenas uma venda por dia para cada canal de venda.', 'Confirmação', MB_YESNO + MB_ICONQUESTION ) = IDNO then
+      Exit;
+  end
+  else begin
+    if MessageBox(WindowHandle,'Deseja atualizar os valores desta venda?', 'Confirmação', MB_YESNO + MB_ICONQUESTION ) = IDNO then
+      Exit;
+  end;
+
+  Result := True;
+end;
+
+procedure Tfcad_venda_externa.direcao(tag: integer);
+begin
+  inherited;
+
+  with Tabela as TTab_venda_externa do begin
+//    Codigo := StrToInt(Edit1.Text);
+    direcao(tag);
+
+    if TabFlag = 'A' then
+      carregaCampos(Codigo);
+  end;
+end;
+
+procedure Tfcad_venda_externa.eTxServExit(Sender: TObject);
+begin
+  inherited;
+  atualizarResumo;
+end;
+
+procedure Tfcad_venda_externa.eTxServFixaExit(Sender: TObject);
+begin
+  inherited;
+  atualizarResumo;
+end;
+
+procedure Tfcad_venda_externa.eValorBrutoExit(Sender: TObject);
+begin
+  inherited;
+  atualizarResumo;
+end;
+
+procedure Tfcad_venda_externa.excluir;
+begin
+  inherited;
+  with Tabela as TTab_venda_externa do begin
+    Codigo := gVendas.DataSource.DataSet.FieldByName('id').AsInteger;
+    excluir;
+  end;
+  AtualizarGrid;
+  novoRegistro;
+  eData.Date := Date;
+//    if not podeExcluir then begin
+//      ShowMessage('Este registro não pode ser excluído!');
+//      Exit;
+//    end;
+//    if MessageBox(WindowHandle,'Deseja excluir essa venda do '+
+//         gVendas.DataSource.DataSet.FieldByName('descricao').AsString+' do dia '+
+//         gVendas.DataSource.DataSet.FieldByName('data_venda').AsString+' ?', 'Confirmação', MB_YESNO + MB_ICONQUESTION ) = IDNO then begin
+//      Exit;
+//    end;
+end;
+
+procedure Tfcad_venda_externa.eCodCanalVExit(Sender: TObject);
+begin
+  if eCodCanalV.Text <> '' then
+    buscaCanalVenda
+  else 
+    eCodCanalV.Text := '';
+end;
+
+procedure Tfcad_venda_externa.eDataChange(Sender: TObject);
+var
+  vData: TDateTime;
+begin
+  inherited;
+  vData := eData.Date;
+  limpaCampos;
+
+  qVendas.Close;
+  with Tabela as TTab_venda_externa do
+    carregaVendasDia(qVendas, vData);
+
+  eCodCanalV.SetFocus;
+end;
+
+procedure Tfcad_venda_externa.eTxServAdicionalExit(Sender: TObject);
+begin
+  inherited;
+  atualizarResumo;
+end;
+
+procedure Tfcad_venda_externa.FormCreate(Sender: TObject);
+begin
+  inherited;
+  qCanalVenda.Close;
+  qCanalVenda.Open;
+end;
+
+procedure Tfcad_venda_externa.FormShow(Sender: TObject);
+begin
+  inherited;
+  Tabela := TTab_venda_externa.create;
+  novoRegistro;
+  eData.Date := Date;
+end;
+
+procedure Tfcad_venda_externa.gravarRegistro;
+begin
+  inherited;
+  with Tabela as TTab_venda_externa do begin
+    DataVenda              := eData.Date;
+    NumeroPedidos          := StrToIntDef(eNrPedidos.Text, 0);
+    IdCanalVenda           := cbCanalVenda.KeyValue;
+    ValorBruto             := eValorBruto.Value;
+    Taxa_servico           := eTxServ.Value;
+    Taxa_servico_adicional := eTxServAdicional.Value;
+
+    gravar;
+  end;
+  AtualizarGrid;
+  novoRegistro;
+  eData.Date := Date;
+end;
+
+procedure Tfcad_venda_externa.gVendasDblClick(Sender: TObject);
+begin
+  inherited;
+  carregaCampos(gVendas.DataSource.DataSet.FieldByName('id').AsInteger);
+  FEdicao := True;
+end;
+
+procedure Tfcad_venda_externa.limpaCampos;
+begin
+  eNrPedidos.Text := '';
+  eCodCanalV.Text := '';
+  cbCanalVenda.KeyValue  := -1;
+  eValorBruto.Value      := 0;
+  eTxServ.Value          := 0;
+  eTxServAdicional.Value := 0;
+  FTxServico             := 0;
+  FEdicao                := False;
+
+  lValorBruto.Width   := 216;
+  lValorLiquido.Width := 216;
+  lTotalTaxa.Width    := 216;
+
+  gVendas.Refresh;
+  qCanalVenda.Close;
+  qCanalVenda.Open;
+
+  atualizarResumo;
+end;
+
+procedure Tfcad_venda_externa.novoRegistro;
+begin
+  inherited;
+  limpaCampos;
+  with Tabela as TTab_venda_externa do begin
+    limparCampos;
+  end;
+end;
+
+function Tfcad_venda_externa.podeExcluir: boolean;
+begin
+  Result := True;
+end;
+
+end.
