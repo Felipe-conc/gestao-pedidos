@@ -77,3 +77,12 @@ __recovery/
 
 # Castalia statistics file (since XE7 Castalia is distributed with Delphi)
 *.stat
+
+# Configurações locais
+*.ini
+*.env
+
+# Banco de dados local
+*.db
+*.sqlite
+*.sqlite3
