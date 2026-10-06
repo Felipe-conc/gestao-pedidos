@@ -317,11 +317,8 @@ begin
   vPath := gb_defaultdir + 'config.ini';
   vConfig := TIniFile.Create(vPath);
   try
-//      j:= '{ "email": "' + gb_username + '",' +
-//            '"senha": "' + gb_password + '" }';
-
-    j:= '{ "email": "teste@gmail.com",' +
-          '"senha": "123123" }';
+    j:= '{ "email": "' + gb_username + '",' +
+          '"senha": "' + gb_password + '" }';
 
     vJsonToSend := TStringStream.Create(j, TEncoding.UTF8);
     vResponse := httpPedidos.Post(gb_base_url + '/login/token', vJsonToSend);
@@ -338,7 +335,7 @@ end;
 procedure TfPrincipal.bImprimirClick(Sender: TObject);
 begin
   if MessageDlg(
-     'Confirma impress„o do pedido - ' + memPedidoDescricao.AsString + ' ?',
+     'Confirma impress√£o do pedido - ' + memPedidoDescricao.AsString + ' ?',
      mtConfirmation,
      [mbYes, mbNo],
      0
@@ -439,7 +436,7 @@ begin
         vResponse := vResponseStream.DataString;
       except
         on E: Exception do begin
-          ShowMessage('Falha de conex„o com o servidor.');
+          ShowMessage('Falha de conex√£o com o servidor.');
           Exit;
         end;
       end;
@@ -461,7 +458,7 @@ begin
         vResponse := vResponseStream.DataString;
       except
         on E: Exception do begin
-          ShowMessage('Falha de conex„o com o servidor.');
+          ShowMessage('Falha de conex√£o com o servidor.');
           Exit;
         end;
       end;
@@ -687,22 +684,6 @@ end;
 procedure TfPrincipal.FormCreate(Sender: TObject);
 begin
   TrayIcon.Icon.Assign(Application.Icon);
-//  FQtdLogin          := 1;
-////  FFirstLogin        := 1;
-//
-//  FTotalPedidos      := 0;
-//  FPedidosPendentes  := 0;
-//  FPedidosCancelados := 0;
-//
-//  // fernando
-//  FContaTimerPedidos := 0;
-//  FUltimoCodigo := ultimoCodigo;
-//
-//  memPedido.Close;
-//  memPedido.Open;
-//
-//  memItens.Close;
-//  memItens.Open;
 
   limparCampos;
 
@@ -881,7 +862,7 @@ begin
         lista.Add('</ae>Telefone: '+memPedidoTelefone.AsString);
 
       if memPedidoEndereco.AsString <> '' then
-        lista.Add('</ae>EndereÁo: '+memPedidoEndereco.AsString);
+        lista.Add('</ae>Endere√ßo: '+memPedidoEndereco.AsString);
 
       if memPedidoObservacao.AsString <> '' then
         lista.Add('<n>OBS:</n> '+memPedidoObservacao.AsString);
@@ -915,7 +896,7 @@ begin
       lista.Add('</corte_total>');
 
       if (FModelo < 0) or (FPorta = '') then begin
-        ShowMessage('Impressora n„o foi configurada!');
+        ShowMessage('Impressora n√£o foi configurada!');
       end
       else begin
         ACBrPosPrinter1.Modelo             := TACBrPosPrinterModelo(FModelo);
@@ -1014,14 +995,14 @@ begin
 
   if not vValido then begin
     if FQtdLogin > 1 then begin
-      ShowMessage('Falha na conex„o com o servidor. Tente novamente mais tarde!');
+      ShowMessage('Falha na conex√£o com o servidor. Tente novamente mais tarde!');
       Application.Terminate;
     end;
     
     desabilitaTela;
 
     Self.Hide;
-    ShowMessage('Falha na conex„o com o servidor. Tente novamente daqui alguns segundos!');  
+    ShowMessage('Falha na conex√£o com o servidor. Tente novamente daqui alguns segundos!');  
 
     flogin := Tflogin.Create(nil);
     try
@@ -1124,7 +1105,7 @@ end;
 procedure TfPrincipal.thrValidacao(ASender: TObject);
 begin
   if FQtdLogin > 1 then begin
-    ShowMessage('Falha na conex„o com o servidor. Tente novamente mais tarde!');
+    ShowMessage('Falha na conex√£o com o servidor. Tente novamente mais tarde!');
     Application.Terminate;
   end;
 
@@ -1132,7 +1113,7 @@ begin
   finalizaThread;
 
   Self.Hide;
-  ShowMessage('Falha na conex„o com o servidor. Tente novamente daqui alguns segundos!');
+  ShowMessage('Falha na conex√£o com o servidor. Tente novamente daqui alguns segundos!');
 
   flogin := Tflogin.Create(nil);
   try
