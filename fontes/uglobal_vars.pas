@@ -60,9 +60,7 @@ end;
 initialization
   gb_defaultdir := ExtractFilePath(ParamStr(0));
   carregaConfig;
-  gb_base_url := 'http://192.168.1.20:7476';
-//  gb_base_url := 'http://lucedata.com.br:7476';
-//  gb_base_url := 'http://192.168.1.87:7476';
+  gb_base_url := 'http://exemplo.api:9999';
 
 
 end.
